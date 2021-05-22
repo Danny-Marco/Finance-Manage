@@ -9,6 +9,10 @@ namespace FinanceAccounting.DataBase
 
         public DbSet<Operation> Operations { get; set; }
 
+        public FinanceContext()
+        {
+            
+        }
 
         public FinanceContext(DbContextOptions<FinanceContext> options)
             : base(options)

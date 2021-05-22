@@ -1,4 +1,6 @@
 using FinanceAccounting.DataBase;
+using FinanceAccounting.UnitsOfWork;
+using FinanceAccounting.UnitsOfWork.Interfaces;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -22,7 +24,7 @@ namespace FinanceAccounting
                 .UseLazyLoadingProxies()
                 .UseSqlServer(
                     Configuration.GetConnectionString("sqlConnection")));
-
+            services.AddTransient<IUnitOfWork, UnitOfWork>();
             services.AddControllers();
         }
 
