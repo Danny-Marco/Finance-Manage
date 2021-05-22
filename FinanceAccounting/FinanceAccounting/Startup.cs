@@ -1,3 +1,4 @@
+using System.Reflection.Metadata;
 using FinanceAccounting.DataBase;
 using FinanceAccounting.Repositories;
 using FinanceAccounting.Repositories.Interfaces;
@@ -27,8 +28,10 @@ namespace FinanceAccounting
                     Configuration.GetConnectionString("sqlConnection")));
             services.AddTransient<IUnitOfWork, UnitOfWork>();
             // services.AddTransient<IAccountRepository, AccountRepository>();
-            services.AddControllers();
-            
+            services.AddControllers().AddNewtonsoftJson(options =>
+                options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+            );
+
             services.AddSwaggerGen();
         }
 

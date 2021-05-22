@@ -17,8 +17,6 @@ namespace FinanceAccounting.Repositories
             _context = context;
         }
 
-        #region Account
-
         public void Create(Account account)
         {
             try
@@ -44,9 +42,8 @@ namespace FinanceAccounting.Repositories
             return accounts;
         }
 
-        public void Delete(int accountId)
+        public void Delete(Account account)
         {
-            var account = Get(accountId);
             _context.Accounts.Remove(account);
             _context.SaveChanges();
         }
@@ -58,18 +55,5 @@ namespace FinanceAccounting.Repositories
             _context.Accounts.Update(findAccount);
             _context.SaveChanges();
         }
-
-        #endregion
-
-        
-        #region Operation
-
-        public List<Operation> GetOperations(int accountId)
-        {
-            var account = Get(accountId);
-            return account.Operations;
-        }
-
-        #endregion
     }
 }

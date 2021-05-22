@@ -8,7 +8,7 @@ namespace FinanceAccounting.Repositories.Interfaces
         
         public List<Model> GetAll();
 
-        void Delete(int modelId);
+        void Delete(Model model);
 
         void Update(Model model);
     }

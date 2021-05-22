@@ -2,14 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Castle.Core.Internal;
 using FinanceAccounting.Models;
+using FinanceAccounting.Repositories.Interfaces;
 using FinanceAccounting.UnitsOfWork.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FinanceAccounting.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     [ApiController]
     public class OperationsController : ControllerBase
     {
@@ -19,9 +21,9 @@ namespace FinanceAccounting.Controllers
         {
             _unitOfWork = unitOfWork;
         }
-        
+
         [HttpGet]
-        public IActionResult Index()
+        public IActionResult GetAllOperations()
         {
             try
             {
@@ -31,41 +33,50 @@ namespace FinanceAccounting.Controllers
             }
             catch
             {
-                return BadRequest("Аккаунтов нет");
+                return NotFound("Операций нет");
             }
         }
-        
 
-        
-        [HttpGet("{id:int}", Name = "GetOperations")]
-        public IActionResult Get(int id)
+
+        [HttpGet("{id:int}")]
+        public IActionResult GetAccountOperations(int id)
         {
-            var account = _unitOfWork.Accounts.Get(id);
+            var account = _unitOfWork.Operations.GetAccount(id);
 
             if (account == null)
             {
-                return BadRequest("Аккаунт с таким id не найден!");
+                return NotFound("Операции с таким id не найдено!");
             }
 
-            var operations = account.Operations;
-
-            if (operations != null)
+            if (account.Operations.IsNullOrEmpty())
             {
-                return Ok(operations);
+                return NotFound("Операций нет!");
             }
 
-            return BadRequest("Операций нет");
+            try
+            {
+                var response = _unitOfWork.Operations.GetAccountOperations(account);
+
+                return Ok(response);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return BadRequest("Что то пошло не так!");
+            }
         }
 
 
-        [HttpPost("{id:int}")]
+        [HttpPost]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
         public IActionResult AddOperation([FromBody] Operation operation, int id)
         {
             var account = _unitOfWork.Accounts.Get(id);
 
             if (account == null)
             {
-                return BadRequest("Аккаунт с таким id не найден!");
+                return NotFound("Аккаунт с таким id не найден!");
             }
 
             try
@@ -80,28 +91,67 @@ namespace FinanceAccounting.Controllers
             }
         }
 
-        // PUT: api/Operations/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        [HttpPost]
+        [ProducesResponseType(typeof(List<Operation>), 200)]
+        public IActionResult GetAccountOperationsByDate([FromBody] DateTime date, int id)
         {
-        }
+            var account = _unitOfWork.Accounts.Get(id);
 
-        // DELETE: api/ApiWithActions/5
-        [HttpDelete("{id:int}")]
-        public IActionResult Delete(int id)
+            if (account == null)
+            {
+                return NotFound("Аккаунт с таким id не найден!");
+            }
+
+            try
+            {
+                var operations = _unitOfWork.Operations.GetOperationsByDate(account, date);
+
+                return Ok(operations);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return NotFound("За данное число операций нет");
+            }
+        }
+        
+        
+        [HttpPut]
+        public IActionResult UpdateOperation([FromBody] Operation operation)
         {
             try
             {
-                _unitOfWork.Operations.Delete(id);
+                _unitOfWork.Operations.Update(operation);
+                return Ok(operation);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return BadRequest("Не получилось изменить операцию");
+                throw;
+            }
+            
+        }
+
+        [HttpDelete("{id:int}")]
+        public IActionResult DeleteOperation(int id)
+        {
+            var operation = _unitOfWork.Operations.Get(id);
+            if (operation == null)
+            {
+                return BadRequest("Операция с таким ID не найдена");
+            }
+            
+            try
+            {
+                _unitOfWork.Operations.Delete(operation);
                 return Ok("Операция удалена");
             }
             catch (Exception e)
             {
-                return BadRequest("Не получилось удалить операцию");
                 Console.WriteLine(e);
-                throw;
+                return BadRequest("Не получилось удалить операцию");
             }
-            
         }
     }
 }
