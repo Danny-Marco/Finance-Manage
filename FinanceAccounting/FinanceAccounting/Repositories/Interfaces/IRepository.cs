@@ -1,10 +1,12 @@
+using System.Collections.Generic;
+
 namespace FinanceAccounting.Repositories.Interfaces
 {
     public interface IRepository<Model> where Model : class
     {
         Model Get(int id);
-
-        void Create(Model model);
+        
+        public List<Model> GetAll();
 
         void Delete(int modelId);
 

@@ -10,6 +10,7 @@ namespace FinanceAccounting.UnitsOfWork
     {
         private FinanceContext _db = new FinanceContext();
         private IAccountRepository _accountRepository;
+        private IOperationRepository _operationRepository;
         private bool disposed;
 
         public IAccountRepository Accounts
@@ -19,6 +20,16 @@ namespace FinanceAccounting.UnitsOfWork
                 if (_accountRepository != null) return _accountRepository;
                 _accountRepository = new AccountRepository(_db);
                 return (AccountRepository) _accountRepository;
+            }
+        }
+
+        public IOperationRepository Operations
+        {
+            get
+            {
+                if (_operationRepository != null) return _operationRepository;
+                _operationRepository = new OperationRepository(_db);
+                return _operationRepository;
             }
         }
         

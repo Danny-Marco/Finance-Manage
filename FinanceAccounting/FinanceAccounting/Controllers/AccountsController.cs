@@ -26,7 +26,7 @@ namespace FinanceAccounting.Controllers
         {
             try
             {
-                var accounts = _unitOfWork.Accounts.GetAllAccounts();
+                var accounts = _unitOfWork.Accounts.GetAll();
 
                 return Ok(accounts);
             }
@@ -74,7 +74,7 @@ namespace FinanceAccounting.Controllers
         }
         
         [HttpPost("{id:int}")]
-        public async Task<IActionResult> Post([FromBody] Operation operation, int id)
+        public IActionResult Post([FromBody] Operation operation, int id)
         {
             // var account = await _DB.Accounts.FindAsync(id);
             // if (account!= null)

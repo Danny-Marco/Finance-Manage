@@ -17,7 +17,6 @@ namespace FinanceAccounting.Repositories
             _context = context;
         }
 
-
         #region Account
 
         public void Create(Account account)
@@ -39,7 +38,7 @@ namespace FinanceAccounting.Repositories
             return _context.Accounts.FirstOrDefault(a => a.AccountId == id);
         }
 
-        public List<Account> GetAllAccounts()
+        public List<Account> GetAll()
         {
             var accounts = _context.Accounts.ToList();
             return accounts;
