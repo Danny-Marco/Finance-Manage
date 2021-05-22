@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -21,25 +22,42 @@ namespace FinanceAccounting.Repositories
 
         public void Create(Account account)
         {
-            _context.Accounts.Add(account);
-            _context.SaveChanges();
+            try
+            {
+                _context.Accounts.Add(account);
+                _context.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
         }
 
-        public Account GetAccount(int id)
+        public Account Get(int id)
         {
-            return _context.Accounts.Find(id);
+            return _context.Accounts.FirstOrDefault(a => a.AccountId == id);
         }
 
         public List<Account> GetAllAccounts()
         {
-            return _context.Accounts.ToList();
+            var accounts = _context.Accounts.ToList();
+            return accounts;
         }
 
-        public async void DeleteAccount(int accountId)
+        public void Delete(int accountId)
         {
-            var account = GetAccount(accountId);
+            var account = Get(accountId);
             _context.Accounts.Remove(account);
-            await _context.SaveChangesAsync();
+            _context.SaveChanges();
+        }
+
+        //TODO реализовать замену данных
+        public void Update(Account account)
+        {
+            var findAccount = Get(account.AccountId);
+            _context.Accounts.Update(findAccount);
+            _context.SaveChanges();
         }
 
         #endregion
@@ -49,7 +67,7 @@ namespace FinanceAccounting.Repositories
 
         public List<Operation> GetOperations(int accountId)
         {
-            var account = GetAccount(accountId);
+            var account = Get(accountId);
             return account.Operations;
         }
 

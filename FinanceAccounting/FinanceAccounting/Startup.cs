@@ -1,4 +1,6 @@
 using FinanceAccounting.DataBase;
+using FinanceAccounting.Repositories;
+using FinanceAccounting.Repositories.Interfaces;
 using FinanceAccounting.UnitsOfWork;
 using FinanceAccounting.UnitsOfWork.Interfaces;
 using Microsoft.AspNetCore.Builder;
@@ -21,10 +23,10 @@ namespace FinanceAccounting
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<FinanceContext>(options => options
-                .UseLazyLoadingProxies()
                 .UseSqlServer(
                     Configuration.GetConnectionString("sqlConnection")));
             services.AddTransient<IUnitOfWork, UnitOfWork>();
+            // services.AddTransient<IAccountRepository, AccountRepository>();
             services.AddControllers();
         }
 

@@ -22,7 +22,7 @@ namespace FinanceAccounting.Controllers
         }
         
         [HttpGet]
-        public IActionResult Get()
+        public IActionResult Index()
         {
             try
             {
@@ -37,36 +37,38 @@ namespace FinanceAccounting.Controllers
         }
 
         
-        [HttpGet("{id}", Name = "GetOperations")]
-        public async Task<IActionResult> Get(int id)
+        [HttpGet("{id:int}")]
+        public IActionResult GetAccount(int id)
         {
-            // var account = await _DB.Accounts.FindAsync(id);
-            //
+            var account = _unitOfWork.Accounts.Get(id);
+            
             // if (account == null)
             // {
             //     return BadRequest("Аккаунт с таким id не найден!");
             // }
             //
-            // var operations = account.Operations.ToList();
+            // var operations = account.Operations;
             //
             // if (operations != null)
             // {
             //     return Ok(operations);
             // }
-            //
+            if (account != null)
+            {
+                return Ok(account);
+            }
+            
             return BadRequest("Аккаунтов нет");
         }
 
-        // POST: api/Accounts
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] Account account)
+        public IActionResult Post([FromBody] Account account)
         {
-            // if (account!= null)
-            // {
-            //     _DB.Accounts.Add(account);
-            //     await _DB.SaveChangesAsync();
-            //     return Ok("Аккаунт был добавлен");
-            // }
+            if (account!= null)
+            {
+                _unitOfWork.Accounts.Create(account);
+                return Ok("Аккаунт был добавлен");
+            }
 
             return BadRequest("Ну удалось добавить аккаунт!");
         }
@@ -87,21 +89,45 @@ namespace FinanceAccounting.Controllers
         }
 
         // PUT: api/Accounts/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        [HttpPut("{id:int}")]
+        public IActionResult Put(int id, [FromBody] Account account)
         {
+            var findAccount = _unitOfWork.Accounts.Get(id);
+            if (findAccount != null)
+            {
+                try
+                {
+                    _unitOfWork.Accounts.Update(account);
+                    return Ok(account);
+                }
+                catch
+                {
+                    return BadRequest("Не удалось изменить аккаунт!");
+                }
+                
+            }
+
+            return BadRequest("Аккаунт с таким ID не найден!");
         }
 
-        // DELETE: api/ApiWithActions/5
+        
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public IActionResult Delete(int id)
         {
-            // var account = await _DB.Accounts.FindAsync(id);
-            // if (account != null)
-            // {
-            //     _DB.Accounts.Remove(account);
-            //     return Ok("Аккаунт был удалён");
-            // }
+            var account = _unitOfWork.Accounts.Get(id);
+            if (account != null)
+            {
+                try
+                {
+                    _unitOfWork.Accounts.Delete(account.AccountId);
+                    return Ok("Аккаунт удалён");
+                }
+                catch
+                {
+                    return BadRequest("Не удалось удалить аккаунт!");
+                }
+                
+            }
 
             return BadRequest("Аккаунт с таким ID не найден!");
         }
