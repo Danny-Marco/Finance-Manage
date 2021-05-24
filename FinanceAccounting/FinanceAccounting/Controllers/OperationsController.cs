@@ -1,15 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Castle.Core.Internal;
 using FinanceAccounting.Models;
 using FinanceAccounting.Models.Request;
-using FinanceAccounting.Repositories.Interfaces;
 using FinanceAccounting.UnitsOfWork.Interfaces;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Linq;
 
 namespace FinanceAccounting.Controllers
 {
@@ -38,8 +33,7 @@ namespace FinanceAccounting.Controllers
                 return NotFound("Операций нет");
             }
         }
-
-
+        
         [HttpGet("{id:int}")]
         public IActionResult GetAccountOperations(int id)
         {
@@ -68,7 +62,35 @@ namespace FinanceAccounting.Controllers
             }
         }
 
+        [HttpGet("{id:int}")]
+        public IActionResult GetOperationsByType(int id, [FromQuery] int definitionId)
+        {
+            var account = _unitOfWork.Operations.GetAccount(id);
 
+            if (account == null)
+            {
+                return NotFound("Аккаунта с таким id не найдено!");
+            }
+
+            if (account.Operations.IsNullOrEmpty())
+            {
+                return NotFound("Операций нет!");
+            }
+
+            try
+            {
+                var response =
+                    _unitOfWork.Operations.GetSortedOperationsByType(account.Operations, definitionId);
+
+                return Ok(response);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return BadRequest("Что то пошло не так!");
+            }
+        }
+        
         [HttpPost]
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
@@ -95,7 +117,7 @@ namespace FinanceAccounting.Controllers
 
         [HttpPost]
         [ProducesResponseType(typeof(List<Operation>), 200)]
-        public IActionResult GetOperationsForDate([FromBody] DateTime date, int id)
+        public IActionResult GetOperationsByDate([FromBody] DateTime date, int id)
         {
             var account = _unitOfWork.Accounts.Get(id);
 
@@ -118,8 +140,6 @@ namespace FinanceAccounting.Controllers
         }
 
         [HttpPost]
-        // [ProducesResponseType(typeof(List<Operation>), 200)]
-        // public IActionResult GetOperationsForPeriod([FromBody] DateTime startDate, DateTime endDate, int id)
         public IActionResult GetOperationsForPeriod(int id, [FromBody] DateRange dateRange)
         {
             var account = _unitOfWork.Accounts.Get(id);
@@ -132,7 +152,7 @@ namespace FinanceAccounting.Controllers
             try
             {
                 var operations =
-                    _unitOfWork.Operations.GetOperationsByPeriod(account, dateRange.StartDate, dateRange.EndDate);
+                    _unitOfWork.Operations.GetOperationsForPeriod(account, dateRange.StartDate, dateRange.EndDate);
 
                 return Ok(operations);
             }
@@ -142,7 +162,6 @@ namespace FinanceAccounting.Controllers
                 return NotFound("За данный период операций нет");
             }
         }
-
 
         [HttpPut]
         public IActionResult UpdateOperation([FromBody] Operation operation)

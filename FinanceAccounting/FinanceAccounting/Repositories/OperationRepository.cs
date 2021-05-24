@@ -73,10 +73,10 @@ namespace FinanceAccounting.Repositories
 
         public ExpandoObject GetAccountOperations(Account account)
         {
-            var income = GetOperationsByType(account, OperationEnum.Income);
-            var expend = GetOperationsByType(account, OperationEnum.Expense);
+            var income = GetOperationsByDefinitionId(account.Operations, 1);
+            var expend = GetOperationsByDefinitionId(account.Operations, 1);
 
-            return GetSortedOperationByType(income, expend);
+            return FormResponseByType(income, expend);
         }
 
         public ExpandoObject GetOperationsByDate(Account account, DateTime date)
@@ -91,12 +91,12 @@ namespace FinanceAccounting.Repositories
             throw new InvalidOperationException();
         }
 
-        public ExpandoObject GetOperationsByPeriod(Account account, DateTime dateStart, DateTime dateEnd)
+        public ExpandoObject GetOperationsForPeriod(Account account, DateTime dateStart, DateTime dateEnd)
         {
             var operations =
                 account.Operations
                     .Where(o => o.Date >= dateStart && o.Date <= dateEnd).ToList();
-            
+
             if (!operations.IsNullOrEmpty())
             {
                 return GetSortedOperationByType(operations);
@@ -105,74 +105,57 @@ namespace FinanceAccounting.Repositories
             throw new InvalidOperationException();
         }
 
+        public ExpandoObject GetSortedOperationsByType(List<Operation> operations, int definitionId)
+        {
+            operations = GetOperationsByDefinitionId(operations, definitionId);
+            return FormResponse(operations);
+        }
 
-        private ExpandoObject GetSortedOperationByType(IReadOnlyCollection<Operation> operations)
+
+        private List<Operation> GetOperationsByDefinitionId(List<Operation> operations, int definitionId)
+        {
+            return operations.Where(o => o.DefinitionId == definitionId).ToList();
+        }
+
+        private ExpandoObject GetSortedOperationByType(List<Operation> operations)
         {
             dynamic response = new ExpandoObject();
 
-            var income =
-                operations.Where(o => o.PurposeOperation == OperationEnum.Income).ToList();
+            var income = GetOperationsByDefinitionId(operations, 1);
+            var expense = GetOperationsByDefinitionId(operations, 2);
 
-            var expends =
-                operations.Where(o => o.PurposeOperation == OperationEnum.Expense).ToList();
-
-            response.Income = income.Select(o
-                => new
-                {
-                    operationId = o.OperationId,
-                    definitionId = o.DefinitionId,
-                    accountId = o.AccountId,
-                    sum = o.Sum,
-                    description = o.Description,
-                    date = o.Date
-                });
-
-            response.Expense = expends.Select(o
-                => new
-                {
-                    operationId = o.OperationId,
-                    definitionId = o.DefinitionId,
-                    accountId = o.AccountId,
-                    sum = o.Sum,
-                    description = o.Description,
-                    date = o.Date
-                });
+            response.Income = FormResponse(income);
+            response.Expense = FormResponse(expense);
 
             return response;
         }
 
-        private ExpandoObject GetSortedOperationByType(List<Operation> income, List<Operation> extends)
+        private ExpandoObject FormResponseByType(List<Operation> income, List<Operation> expense)
         {
             dynamic response = new ExpandoObject();
 
-            response.Income = income.Select(o
-                => new
-                {
-                    operationId = o.OperationId,
-                    definitionId = o.DefinitionId,
-                    accountId = o.AccountId,
-                    sum = o.Sum,
-                    description = o.Description,
-                    date = o.Date
-                });
-
-            response.Expense = extends.Select(o
-                => new
-                {
-                    operationId = o.OperationId,
-                    definitionId = o.DefinitionId,
-                    accountId = o.AccountId,
-                    sum = o.Sum,
-                    description = o.Description,
-                    date = o.Date
-                });
+            response.Income = FormResponse(income);
+            response.Expense = FormResponse(expense);
 
             return response;
         }
 
-        private List<Operation> GetOperationsByType(Account account, OperationEnum operationType)
+        private ExpandoObject FormResponse(List<Operation> operations)
         {
-            return account.Operations.Where(o => o.PurposeOperation == operationType).ToList();
+            dynamic response = new ExpandoObject();
+
+            response.Operations = operations.Select(o
+                => new
+                {
+                    operationId = o.OperationId,
+                    definitionId = o.DefinitionId,
+                    sum = o.Sum,
+                    date = o.Date,
+                    description = o.Description,
+                    accountId = o.AccountId,
+                });
+
+            return response;
         }
     }
 }
