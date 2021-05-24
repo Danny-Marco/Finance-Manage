@@ -10,9 +10,13 @@ namespace FinanceAccounting.Repositories.Interfaces
         public ExpandoObject GetAccountOperations(Account account);
         
         public Account GetAccount(int id);
+        
+        void Update(Operation operation);
 
-        public void CreateOperation(int accountId, Operation operation);
+        public void CreateOperation(Account account, Operation operation);
 
         public ExpandoObject GetOperationsByDate(Account account, DateTime date);
+        
+        public ExpandoObject GetOperationsByPeriod(Account account, DateTime dateStart, DateTime dateEnd);
     }
 }

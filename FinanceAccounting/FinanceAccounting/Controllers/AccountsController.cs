@@ -64,28 +64,7 @@ namespace FinanceAccounting.Controllers
                 return BadRequest("Ну удалось добавить аккаунт!");
             }
         }
-
-        [HttpPut("{id:int}")]
-        public IActionResult UpdateAccount(int id, [FromBody] Account account)
-        {
-            var findAccount = _unitOfWork.Accounts.Get(id);
-            if (findAccount != null)
-            {
-                try
-                {
-                    _unitOfWork.Accounts.Update(account);
-                    return Ok(account);
-                }
-                catch
-                {
-                    return BadRequest("Не удалось изменить аккаунт!");
-                }
-            }
-
-            return NotFound("Аккаунт с таким id не найден!");
-        }
-
-
+        
         [HttpDelete("{id}")]
         public IActionResult DeleteAccount(int id)
         {

@@ -17,7 +17,7 @@ namespace FinanceAccounting.Repositories
         {
             _context = context;
         }
-        
+
         public Account GetAccount(int id)
         {
             return _context.Accounts.FirstOrDefault(a => a.AccountId == id);
@@ -33,31 +33,8 @@ namespace FinanceAccounting.Repositories
             return _context.Operations.ToList();
         }
 
-        public ExpandoObject GetAccountOperations(Account account)
+        public void CreateOperation(Account account, Operation operation)
         {
-            var income = GetOperationsByType(account, OperationEnum.Income);
-            var expend = GetOperationsByType(account, OperationEnum.Expense);
-            
-            return GetSortedOperationByType(income, expend);
-        }
-
-        public ExpandoObject GetOperationsByDate(Account account, DateTime date)
-        {
-            var operations = account.Operations.Where(o => o.Date == date).ToList();
-
-            if (!operations.IsNullOrEmpty())
-            {
-                return GetSortedOperationByType(operations);
-            }
-            
-            throw new InvalidOperationException();
-        }
-        
-        public void CreateOperation(int accountId, Operation operation)
-        {
-            var account = GetAccount(accountId);
-
-            // TODO реализовать обработку операций через Observer
             switch (operation.PurposeOperation)
             {
                 case OperationEnum.Income:
@@ -90,7 +67,42 @@ namespace FinanceAccounting.Repositories
             changeOperation.Date = operation.Date;
             changeOperation.Description = operation.Description;
             changeOperation.Account = operation.Account;
+            changeOperation.Sum = operation.Sum;
             _context.SaveChanges();
+        }
+
+        public ExpandoObject GetAccountOperations(Account account)
+        {
+            var income = GetOperationsByType(account, OperationEnum.Income);
+            var expend = GetOperationsByType(account, OperationEnum.Expense);
+
+            return GetSortedOperationByType(income, expend);
+        }
+
+        public ExpandoObject GetOperationsByDate(Account account, DateTime date)
+        {
+            var operations = account.Operations.Where(o => o.Date == date).ToList();
+
+            if (!operations.IsNullOrEmpty())
+            {
+                return GetSortedOperationByType(operations);
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        public ExpandoObject GetOperationsByPeriod(Account account, DateTime dateStart, DateTime dateEnd)
+        {
+            var operations =
+                account.Operations
+                    .Where(o => o.Date >= dateStart && o.Date <= dateEnd).ToList();
+            
+            if (!operations.IsNullOrEmpty())
+            {
+                return GetSortedOperationByType(operations);
+            }
+
+            throw new InvalidOperationException();
         }
 
 
@@ -98,10 +110,10 @@ namespace FinanceAccounting.Repositories
         {
             dynamic response = new ExpandoObject();
 
-            var income = 
+            var income =
                 operations.Where(o => o.PurposeOperation == OperationEnum.Income).ToList();
-            
-            var expends = 
+
+            var expends =
                 operations.Where(o => o.PurposeOperation == OperationEnum.Expense).ToList();
 
             response.Income = income.Select(o
@@ -115,7 +127,7 @@ namespace FinanceAccounting.Repositories
                     date = o.Date
                 });
 
-            response.Expend = expends.Select(o
+            response.Expense = expends.Select(o
                 => new
                 {
                     operationId = o.OperationId,
@@ -128,7 +140,7 @@ namespace FinanceAccounting.Repositories
 
             return response;
         }
-        
+
         private ExpandoObject GetSortedOperationByType(List<Operation> income, List<Operation> extends)
         {
             dynamic response = new ExpandoObject();
@@ -144,7 +156,7 @@ namespace FinanceAccounting.Repositories
                     date = o.Date
                 });
 
-            response.Expend = extends.Select(o
+            response.Expense = extends.Select(o
                 => new
                 {
                     operationId = o.OperationId,

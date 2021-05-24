@@ -47,13 +47,5 @@ namespace FinanceAccounting.Repositories
             _context.Accounts.Remove(account);
             _context.SaveChanges();
         }
-
-        //TODO реализовать замену данных
-        public void Update(Account account)
-        {
-            var findAccount = Get(account.AccountId);
-            _context.Accounts.Update(findAccount);
-            _context.SaveChanges();
-        }
     }
 }
