@@ -1,11 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using FinanceAccounting.DataBase;
-using FinanceAccounting.Models;
+using System;using FinanceAccounting.Models;
 using FinanceAccounting.UnitsOfWork.Interfaces;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FinanceAccounting.Controllers
@@ -53,6 +47,11 @@ namespace FinanceAccounting.Controllers
         [HttpPost]
         public IActionResult CreateAccount([FromBody] Account account)
         {
+            if (account == null)
+            {
+                return BadRequest("Нет аккаунта для добавления!");
+            }
+            
             try
             {
                 _unitOfWork.Accounts.Create(account);

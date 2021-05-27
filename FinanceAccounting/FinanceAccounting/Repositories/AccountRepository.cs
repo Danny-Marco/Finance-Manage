@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using FinanceAccounting.DataBase;
 using FinanceAccounting.Models;
 using FinanceAccounting.Repositories.Interfaces;
@@ -46,6 +45,11 @@ namespace FinanceAccounting.Repositories
         {
             _context.Accounts.Remove(account);
             _context.SaveChanges();
+        }
+
+        public int Count()
+        {
+            return _context.Accounts.Count();
         }
     }
 }

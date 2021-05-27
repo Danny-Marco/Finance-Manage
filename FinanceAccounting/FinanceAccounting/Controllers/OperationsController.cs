@@ -19,23 +19,8 @@ namespace FinanceAccounting.Controllers
             _unitOfWork = unitOfWork;
         }
 
-        [HttpGet]
-        public IActionResult GetAllOperations()
-        {
-            try
-            {
-                var operations = _unitOfWork.Operations.GetAll();
-
-                return Ok(operations);
-            }
-            catch
-            {
-                return NotFound("Операций нет");
-            }
-        }
-        
         [HttpGet("{id:int}")]
-        public IActionResult GetAccountOperations(int id)
+        public ActionResult<List<Operation>> GetAccountOperations(int id)
         {
             var account = _unitOfWork.Operations.GetAccount(id);
 
@@ -63,7 +48,7 @@ namespace FinanceAccounting.Controllers
         }
 
         [HttpGet("{id:int}")]
-        public IActionResult GetOperationsByType(int id, [FromQuery] int definitionId)
+        public ActionResult<List<Operation>> GetOperationsByType(int id, int definitionId)
         {
             var account = _unitOfWork.Operations.GetAccount(id);
 
@@ -82,7 +67,12 @@ namespace FinanceAccounting.Controllers
                 var response =
                     _unitOfWork.Operations.GetSortedOperationsByType(account.Operations, definitionId);
 
-                return Ok(response);
+                if (!response.IsNullOrEmpty())
+                {
+                    return Ok(response);
+                }
+
+                return NotFound("Операций нет!");
             }
             catch (Exception e)
             {
@@ -90,12 +80,14 @@ namespace FinanceAccounting.Controllers
                 return BadRequest("Что то пошло не так!");
             }
         }
-        
+
         [HttpPost]
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
         public IActionResult AddOperation([FromBody] Operation operation, int id)
         {
+            var isAdded = false;
             var account = _unitOfWork.Accounts.Get(id);
 
             if (account == null)
@@ -103,22 +95,27 @@ namespace FinanceAccounting.Controllers
                 return NotFound("Аккаунт с таким id не найден!");
             }
 
-            try
+            _unitOfWork.Operations.CreateOperation(account, operation, ref isAdded);
+
+            if (isAdded)
             {
-                _unitOfWork.Operations.CreateOperation(account, operation);
-                return Ok($"Операция {operation.PurposeOperation} : {operation.Description} была добавлена");
+                return Ok($"Операция({operation.PurposeOperation}) {operation.Description} была добавлена");
             }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                return BadRequest("Не удалось добавить операцию");
-            }
+
+            return BadRequest("Не удалось добавить операцию");
         }
 
         [HttpPost]
         [ProducesResponseType(typeof(List<Operation>), 200)]
-        public IActionResult GetOperationsByDate([FromBody] DateTime date, int id)
+        public IActionResult GetOperationsByDate([FromBody] string inputDate, int id)
         {
+            var areThereOperations = false;
+
+            if (!DateTime.TryParse(inputDate, out var date))
+            {
+                return BadRequest("Не верный формат даты!");
+            }
+
             var account = _unitOfWork.Accounts.Get(id);
 
             if (account == null)
@@ -126,56 +123,65 @@ namespace FinanceAccounting.Controllers
                 return NotFound("Аккаунт с таким id не найден!");
             }
 
-            try
-            {
-                var operations = _unitOfWork.Operations.GetOperationsByDate(account, date);
+            var operations =
+                _unitOfWork.Operations.GetOperationsByDate(account, date, ref areThereOperations);
 
+            if (areThereOperations)
+            {
                 return Ok(operations);
             }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                return NotFound("За данное число операций нет");
-            }
+
+            return NotFound("За данное число операций нет");
         }
 
         [HttpPost]
         public IActionResult GetOperationsForPeriod(int id, [FromBody] DateRange dateRange)
         {
+            var areThereOperations = false;
+
             var account = _unitOfWork.Accounts.Get(id);
 
             if (account == null)
             {
                 return NotFound("Аккаунт с таким id не найден!");
             }
-
-            try
+            
+            if (!DateTime.TryParse(dateRange.StartDate, out var startDate)
+                & !DateTime.TryParse(dateRange.EndDate, out var endDate))
             {
-                var operations =
-                    _unitOfWork.Operations.GetOperationsForPeriod(account, dateRange.StartDate, dateRange.EndDate);
+                return BadRequest("Не верный формат даты!");
+            }
 
+            var operations =
+                _unitOfWork.Operations.GetOperationsForPeriod(account, startDate, endDate, ref areThereOperations);
+
+            if (areThereOperations)
+            {
                 return Ok(operations);
             }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                return NotFound("За данный период операций нет");
-            }
+
+            return NotFound("За данный период операций нет");
         }
 
         [HttpPut]
-        public IActionResult UpdateOperation([FromBody] Operation operation)
+        public IActionResult UpdateOperation([FromBody] Operation transmittedOperation)
         {
+            var foundOperation = _unitOfWork.Operations.Get(transmittedOperation.OperationId);
+            
+            if (foundOperation == null)
+            {
+                return NotFound("Операция для изменения не найдена");
+            }
+
             try
             {
-                _unitOfWork.Operations.Update(operation);
-                return Ok(operation);
+                _unitOfWork.Operations.Update(foundOperation, transmittedOperation);
+                return Ok(transmittedOperation);
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
                 return BadRequest("Не получилось изменить операцию");
-                throw;
             }
         }
 
@@ -185,7 +191,7 @@ namespace FinanceAccounting.Controllers
             var operation = _unitOfWork.Operations.Get(id);
             if (operation == null)
             {
-                return BadRequest("Операция с таким ID не найдена");
+                return NotFound("Операция с таким ID не найдена");
             }
 
             try

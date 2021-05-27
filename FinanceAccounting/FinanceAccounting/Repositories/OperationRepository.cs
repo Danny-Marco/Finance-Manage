@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Dynamic;
 using System.Linq;
 using Castle.Core.Internal;
 using FinanceAccounting.DataBase;
@@ -11,7 +10,7 @@ namespace FinanceAccounting.Repositories
 {
     public class OperationRepository : IOperationRepository
     {
-        private FinanceContext _context;
+        private readonly FinanceContext _context;
 
         public OperationRepository(FinanceContext context)
         {
@@ -33,7 +32,7 @@ namespace FinanceAccounting.Repositories
             return _context.Operations.ToList();
         }
 
-        public void CreateOperation(Account account, Operation operation)
+        public void CreateOperation(Account account, Operation operation, ref bool isAdded)
         {
             switch (operation.PurposeOperation)
             {
@@ -41,12 +40,14 @@ namespace FinanceAccounting.Repositories
                     account.Operations.Add(operation);
                     account.CurrentSum += operation.Sum;
                     _context.SaveChanges();
+                    isAdded = true;
                     break;
 
                 case OperationEnum.Expense when (account.CurrentSum - operation.Sum) > 0:
                     account.Operations.Add(operation);
                     account.CurrentSum -= operation.Sum;
                     _context.SaveChanges();
+                    isAdded = true;
                     break;
             }
         }
@@ -57,105 +58,52 @@ namespace FinanceAccounting.Repositories
             _context.SaveChanges();
         }
 
-        public void Update(Operation operation)
+        public void Update(Operation foundOperation, Operation transmittedOperation)
         {
-            var changeOperation = Get(operation.OperationId);
-
-            changeOperation.Account = operation.Account;
-            changeOperation.AccountId = operation.AccountId;
-            changeOperation.DefinitionId = operation.DefinitionId;
-            changeOperation.Date = operation.Date;
-            changeOperation.Description = operation.Description;
-            changeOperation.Account = operation.Account;
-            changeOperation.Sum = operation.Sum;
+            foundOperation.DefinitionId = transmittedOperation.DefinitionId;
+            foundOperation.Sum = transmittedOperation.Sum;
+            foundOperation.Date = transmittedOperation.Date;
+            foundOperation.Description = transmittedOperation.Description;
             _context.SaveChanges();
         }
 
-        public ExpandoObject GetAccountOperations(Account account)
+        public List<Operation> GetAccountOperations(Account account)
         {
-            var income = GetOperationsByDefinitionId(account.Operations, 1);
-            var expend = GetOperationsByDefinitionId(account.Operations, 1);
-
-            return FormResponseByType(income, expend);
+            return account.Operations.ToList();
         }
 
-        public ExpandoObject GetOperationsByDate(Account account, DateTime date)
+        public List<Operation> GetOperationsByDate(Account account, DateTime date, ref bool areThereOperations)
         {
-            var operations = account.Operations.Where(o => o.Date == date).ToList();
+            var operations =
+                account.Operations.Where(o => o.Date.Day == date.Date.Day).ToList();
 
             if (!operations.IsNullOrEmpty())
             {
-                return GetSortedOperationByType(operations);
+                areThereOperations = true;
             }
 
-            throw new InvalidOperationException();
+            return operations;
         }
 
-        public ExpandoObject GetOperationsForPeriod(Account account, DateTime dateStart, DateTime dateEnd)
+        public List<Operation> GetOperationsForPeriod(Account account, DateTime dateStart, DateTime dateEnd,
+            ref bool areThereOperations)
         {
             var operations =
                 account.Operations
-                    .Where(o => o.Date >= dateStart && o.Date <= dateEnd).ToList();
+                    .Where(o => o.Date.Day >= dateStart.Date.Day && o.Date.Day <= dateEnd.Date.Day).ToList();
 
             if (!operations.IsNullOrEmpty())
             {
-                return GetSortedOperationByType(operations);
+                areThereOperations = true;
             }
 
-            throw new InvalidOperationException();
+            return operations;
         }
 
-        public ExpandoObject GetSortedOperationsByType(List<Operation> operations, int definitionId)
+        public List<Operation> GetSortedOperationsByType(List<Operation> operations, int definitionId)
         {
-            operations = GetOperationsByDefinitionId(operations, definitionId);
-            return FormResponse(operations);
-        }
-
-
-        private List<Operation> GetOperationsByDefinitionId(List<Operation> operations, int definitionId)
-        {
-            return operations.Where(o => o.DefinitionId == definitionId).ToList();
-        }
-
-        private ExpandoObject GetSortedOperationByType(List<Operation> operations)
-        {
-            dynamic response = new ExpandoObject();
-
-            var income = GetOperationsByDefinitionId(operations, 1);
-            var expense = GetOperationsByDefinitionId(operations, 2);
-
-            response.Income = FormResponse(income);
-            response.Expense = FormResponse(expense);
-
-            return response;
-        }
-
-        private ExpandoObject FormResponseByType(List<Operation> income, List<Operation> expense)
-        {
-            dynamic response = new ExpandoObject();
-
-            response.Income = FormResponse(income);
-            response.Expense = FormResponse(expense);
-
-            return response;
-        }
-
-        private ExpandoObject FormResponse(List<Operation> operations)
-        {
-            dynamic response = new ExpandoObject();
-
-            response.Operations = operations.Select(o
-                => new
-                {
-                    operationId = o.OperationId,
-                    definitionId = o.DefinitionId,
-                    sum = o.Sum,
-                    date = o.Date,
-                    description = o.Description,
-                    accountId = o.AccountId,
-                });
-
-            return response;
+            operations = operations.Where(o => o.DefinitionId == definitionId).ToList();
+            return operations;
         }
     }
 }

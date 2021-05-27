@@ -7,18 +7,18 @@ namespace FinanceAccounting.Repositories.Interfaces
 {
     public interface IOperationRepository : IRepository<Operation>
     {
-        public ExpandoObject GetAccountOperations(Account account);
+        public List<Operation> GetAccountOperations(Account account);
 
         public Account GetAccount(int id);
 
-        void Update(Operation operation);
+        void Update(Operation foundOperation, Operation transmittedOperation);
 
-        public void CreateOperation(Account account, Operation operation);
+        public void CreateOperation(Account account, Operation operation, ref bool IsAdded);
 
-        public ExpandoObject GetOperationsByDate(Account account, DateTime date);
+        public List<Operation> GetOperationsByDate(Account account, DateTime date, ref bool areThereOperations);
+        
+        public List<Operation> GetOperationsForPeriod(Account account, DateTime dateStart, DateTime dateEnd, ref bool areThereOperations);
 
-        public ExpandoObject GetOperationsForPeriod(Account account, DateTime dateStart, DateTime dateEnd);
-
-        public ExpandoObject GetSortedOperationsByType(List<Operation> operations, int definitionId);
+        public List<Operation> GetSortedOperationsByType(List<Operation> operations, int definitionId);
     }
 }

@@ -27,7 +27,6 @@ namespace FinanceAccounting
                 .UseSqlServer(
                     Configuration.GetConnectionString("sqlConnection")));
             services.AddTransient<IUnitOfWork, UnitOfWork>();
-            // services.AddTransient<IAccountRepository, AccountRepository>();
             services.AddControllers().AddNewtonsoftJson(options =>
                 options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
             );
@@ -46,7 +45,7 @@ namespace FinanceAccounting
             
             app.UseSwaggerUI(c =>
             {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Finance Accounting");
             });
 
             app.UseHttpsRedirection();

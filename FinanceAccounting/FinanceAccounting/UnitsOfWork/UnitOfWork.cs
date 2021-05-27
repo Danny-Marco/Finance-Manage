@@ -32,12 +32,7 @@ namespace FinanceAccounting.UnitsOfWork
                 return _operationRepository;
             }
         }
-        
-        public void Save()
-        {
-            _db.SaveChanges();
-        }
-        
+
         #region Disposing
 
         public virtual void Dispose(bool disposing)

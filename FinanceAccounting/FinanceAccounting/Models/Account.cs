@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Runtime.Serialization;
+using Newtonsoft.Json;
 
 namespace FinanceAccounting.Models
 {
@@ -8,6 +10,8 @@ namespace FinanceAccounting.Models
         
         public decimal CurrentSum { get; set; }
         
+        [JsonIgnore] 
+        [IgnoreDataMember]
         public virtual List<Operation> ? Operations { get; set; }
     }
 }

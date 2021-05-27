@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using FinanceAccounting.Models;
 using Microsoft.EntityFrameworkCore;
@@ -14,11 +13,6 @@ namespace FinanceAccounting.DataBase
 
         public FinanceContext()
         {
-            Console.WriteLine();
-            Console.WriteLine("=====================");
-            Console.WriteLine("Пустой конструктор!!!");
-            Console.WriteLine("=====================");
-            Console.WriteLine();
         }
 
         public FinanceContext(DbContextOptions<FinanceContext> options)
