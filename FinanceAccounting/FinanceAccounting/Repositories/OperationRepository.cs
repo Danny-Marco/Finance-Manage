@@ -37,19 +37,23 @@ namespace FinanceAccounting.Repositories
             switch (operation.PurposeOperation)
             {
                 case OperationEnum.Income:
-                    account.Operations.Add(operation);
+                    AddToAccountOperations(account, operation, out isAdded);
                     account.CurrentSum += operation.Sum;
-                    _context.SaveChanges();
-                    isAdded = true;
                     break;
 
                 case OperationEnum.Expense when (account.CurrentSum - operation.Sum) > 0:
-                    account.Operations.Add(operation);
+                    AddToAccountOperations(account, operation, out isAdded);
                     account.CurrentSum -= operation.Sum;
-                    _context.SaveChanges();
-                    isAdded = true;
                     break;
             }
+        }
+
+        private void AddToAccountOperations(Account account, Operation operation, out bool isAdded)
+        {
+            account.Operations.Add(operation);
+            
+            _context.SaveChanges();
+            isAdded = true;
         }
 
         public void Delete(Operation operation)

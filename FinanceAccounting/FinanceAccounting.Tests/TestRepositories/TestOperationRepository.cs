@@ -55,17 +55,21 @@ namespace FinanceAccounting.Tests.TestRepositories
             switch (operation.PurposeOperation)
             {
                 case OperationEnum.Income:
-                    account.Operations.Add(operation);
+                    AddToAccountOperations(account, operation, out IsAdded);
                     account.CurrentSum += operation.Sum;
-                    IsAdded = true;
                     break;
 
                 case OperationEnum.Expense when (account.CurrentSum - operation.Sum) > 0:
-                    account.Operations.Add(operation);
+                    AddToAccountOperations(account, operation, out IsAdded);
                     account.CurrentSum -= operation.Sum;
-                    IsAdded = true;
                     break;
             }
+        }
+        
+        private void AddToAccountOperations(Account account, Operation operation, out bool isAdded)
+        {
+            account.Operations.Add(operation);
+            isAdded = true;
         }
 
         public List<Operation> GetOperationsByDate(Account account, DateTime date, ref bool areThereOperations)
