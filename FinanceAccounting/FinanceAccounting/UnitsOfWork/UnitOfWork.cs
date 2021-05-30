@@ -13,24 +13,14 @@ namespace FinanceAccounting.UnitsOfWork
         private IOperationRepository _operationRepository;
         private bool disposed;
 
-        public IAccountRepository Accounts
+        public IAccountRepository Accounts { get; }
+        
+        public IOperationRepository Operations { get; }
+        
+        public UnitOfWork()
         {
-            get
-            {
-                if (_accountRepository != null) return _accountRepository;
-                _accountRepository = new AccountRepository(_db);
-                return (AccountRepository) _accountRepository;
-            }
-        }
-
-        public IOperationRepository Operations
-        {
-            get
-            {
-                if (_operationRepository != null) return _operationRepository;
-                _operationRepository = new OperationRepository(_db);
-                return _operationRepository;
-            }
+            Accounts = new AccountRepository(_db);
+            Operations = new OperationRepository(_db);
         }
 
         #region Disposing
@@ -47,7 +37,7 @@ namespace FinanceAccounting.UnitsOfWork
                 disposed = true;
             }
         }
-        
+
         public void Dispose()
         {
             Dispose(true);
