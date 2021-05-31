@@ -9,9 +9,9 @@ namespace FinanceAccounting.Repositories
 {
     public class AccountRepository : IAccountRepository
     {
-        private readonly IFinanceContext _context;
+        private readonly FinanceContext _context;
 
-        public AccountRepository(IFinanceContext context)
+        public AccountRepository(FinanceContext context)
         {
             _context = context;
         }
@@ -21,6 +21,7 @@ namespace FinanceAccounting.Repositories
             try
             {
                 _context.Accounts.Add(account);
+                _context.Save();
             }
             catch (Exception e)
             {
@@ -43,6 +44,7 @@ namespace FinanceAccounting.Repositories
         public void Delete(Account account)
         {
             _context.Accounts.Remove(account);
+            _context.Save();
         }
 
         public int Count()

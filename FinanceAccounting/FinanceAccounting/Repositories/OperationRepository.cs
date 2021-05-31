@@ -10,9 +10,9 @@ namespace FinanceAccounting.Repositories
 {
     public class OperationRepository : IOperationRepository
     {
-        private readonly IFinanceContext _context;
+        private readonly FinanceContext _context;
 
-        public OperationRepository(IFinanceContext context)
+        public OperationRepository(FinanceContext context)
         {
             _context = context;
         }
@@ -39,11 +39,13 @@ namespace FinanceAccounting.Repositories
                 case OperationEnum.Income:
                     AddToAccountOperations(account, operation, out isAdded);
                     account.CurrentSum += operation.Sum;
+                    _context.Save();
                     break;
 
                 case OperationEnum.Expense when (account.CurrentSum - operation.Sum) > 0:
                     AddToAccountOperations(account, operation, out isAdded);
                     account.CurrentSum -= operation.Sum;
+                    _context.Save();
                     break;
             }
         }
@@ -51,13 +53,14 @@ namespace FinanceAccounting.Repositories
         private void AddToAccountOperations(Account account, Operation operation, out bool isAdded)
         {
             account.Operations.Add(operation);
-            
+
             isAdded = true;
         }
 
         public void Delete(Operation operation)
         {
             _context.Operations.Remove(operation);
+            _context.Save();
         }
 
         public void Update(Operation foundOperation, Operation transmittedOperation)
@@ -66,6 +69,7 @@ namespace FinanceAccounting.Repositories
             foundOperation.Sum = transmittedOperation.Sum;
             foundOperation.Date = transmittedOperation.Date;
             foundOperation.Description = transmittedOperation.Description;
+            _context.Save();
         }
 
         public List<Operation> GetAccountOperations(Account account)

@@ -55,7 +55,6 @@ namespace FinanceAccounting.Controllers
             try
             {
                 _unitOfWork.Accounts.Create(account);
-                _unitOfWork.Save();
                 return Ok("Аккаунт был добавлен");
             }
             catch (Exception e)
@@ -75,7 +74,6 @@ namespace FinanceAccounting.Controllers
                 try
                 {
                     _unitOfWork.Accounts.Delete(account);
-                    _unitOfWork.Save();
                     return Ok("Аккаунт удалён");
                 }
                 catch

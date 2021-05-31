@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using FinanceAccounting.Models;
 using Microsoft.EntityFrameworkCore;
@@ -5,10 +6,8 @@ using Microsoft.Extensions.Configuration;
 
 namespace FinanceAccounting.DataBase
 {
-    public class FinanceContext : DbContext, IFinanceContext
+    public class FinanceContext : DbContext
     {
-        public DbContext Instance => this;
-        
         public DbSet<Account> Accounts { get; set; }
 
         public DbSet<Operation> Operations { get; set; }
@@ -21,7 +20,7 @@ namespace FinanceAccounting.DataBase
             : base(options)
         {
         }
-        
+
         public void Save()
         {
             SaveChanges();

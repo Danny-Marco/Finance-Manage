@@ -1,11 +1,9 @@
-using System.Reflection.Metadata;
 using FinanceAccounting.DataBase;
-using FinanceAccounting.Repositories;
-using FinanceAccounting.Repositories.Interfaces;
 using FinanceAccounting.UnitsOfWork;
 using FinanceAccounting.UnitsOfWork.Interfaces;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -27,7 +25,6 @@ namespace FinanceAccounting
                 .UseSqlServer(
                     Configuration.GetConnectionString("sqlConnection")));
             services.AddTransient<IUnitOfWork, UnitOfWork>();
-            services.AddTransient<IFinanceContext, FinanceContext>();
             services.AddControllers().AddNewtonsoftJson(options =>
                 options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
             );
@@ -41,13 +38,10 @@ namespace FinanceAccounting
             {
                 app.UseDeveloperExceptionPage();
             }
-            
+
             app.UseSwagger();
-            
-            app.UseSwaggerUI(c =>
-            {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Finance Accounting");
-            });
+
+            app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "Finance Accounting"); });
 
             app.UseHttpsRedirection();
 

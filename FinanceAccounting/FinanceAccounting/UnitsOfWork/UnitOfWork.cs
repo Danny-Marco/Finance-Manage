@@ -8,23 +8,17 @@ namespace FinanceAccounting.UnitsOfWork
 {
     public class UnitOfWork : IUnitOfWork
     {
-        private IFinanceContext _db;
+        private readonly FinanceContext _db = new FinanceContext();
         private bool disposed;
 
         public IAccountRepository Accounts { get; }
         
         public IOperationRepository Operations { get; }
         
-        public UnitOfWork(IFinanceContext context)
+        public UnitOfWork()
         {
-            _db = context;
             Accounts = new AccountRepository(_db);
             Operations = new OperationRepository(_db);
-        }
-        
-        public void Save()
-        {
-            _db.Save();
         }
 
         #region Disposing

@@ -99,7 +99,6 @@ namespace FinanceAccounting.Controllers
 
             if (isAdded)
             {
-                _unitOfWork.Save();
                 return Ok($"Операция({operation.PurposeOperation}) {operation.Description} была добавлена");
             }
 
@@ -146,7 +145,7 @@ namespace FinanceAccounting.Controllers
             {
                 return NotFound("Аккаунт с таким id не найден!");
             }
-            
+
             if (!DateTime.TryParse(dateRange.StartDate, out var startDate)
                 & !DateTime.TryParse(dateRange.EndDate, out var endDate))
             {
@@ -168,7 +167,7 @@ namespace FinanceAccounting.Controllers
         public IActionResult UpdateOperation([FromBody] Operation transmittedOperation)
         {
             var foundOperation = _unitOfWork.Operations.Get(transmittedOperation.OperationId);
-            
+
             if (foundOperation == null)
             {
                 return NotFound("Операция для изменения не найдена");
@@ -177,7 +176,6 @@ namespace FinanceAccounting.Controllers
             try
             {
                 _unitOfWork.Operations.Update(foundOperation, transmittedOperation);
-                _unitOfWork.Save();
                 return Ok(transmittedOperation);
             }
             catch (Exception e)
@@ -199,7 +197,6 @@ namespace FinanceAccounting.Controllers
             try
             {
                 _unitOfWork.Operations.Delete(operation);
-                _unitOfWork.Save();
                 return Ok("Операция удалена");
             }
             catch (Exception e)

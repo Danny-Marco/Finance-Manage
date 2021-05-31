@@ -9,27 +9,37 @@ namespace FinanceAccounting.Tests
         private TestAccountRepository _accountRepository;
 
         private TestOperationRepository _operationRepository;
+        
+        public IAccountRepository Accounts { get; }
+        
+        public IOperationRepository Operations { get; }
 
-        public IAccountRepository Accounts
+        // public IAccountRepository Accounts
+        // {
+        //     get
+        //     {
+        //         if (_accountRepository != null) return _accountRepository;
+        //         _accountRepository = new TestAccountRepository();
+        //         return _accountRepository;
+        //     }
+        // }
+        //
+        // public IOperationRepository Operations
+        // {
+        //     get
+        //     {
+        //         if (_operationRepository != null) return _operationRepository;
+        //         _operationRepository = new TestOperationRepository();
+        //         return _operationRepository;
+        //     }
+        // }
+
+        public TestUnitOfWork()
         {
-            get
-            {
-                if (_accountRepository != null) return _accountRepository;
-                _accountRepository = new TestAccountRepository();
-                return _accountRepository;
-            }
+            Accounts = new TestAccountRepository();
+            Operations = new TestOperationRepository();
         }
-
-        public IOperationRepository Operations
-        {
-            get
-            {
-                if (_operationRepository != null) return _operationRepository;
-                _operationRepository = new TestOperationRepository();
-                return _operationRepository;
-            }
-        }
-
+        
         public void Save()
         {
             throw new System.NotImplementedException();
