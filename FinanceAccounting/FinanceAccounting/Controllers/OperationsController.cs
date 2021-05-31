@@ -99,6 +99,7 @@ namespace FinanceAccounting.Controllers
 
             if (isAdded)
             {
+                _unitOfWork.Save();
                 return Ok($"Операция({operation.PurposeOperation}) {operation.Description} была добавлена");
             }
 
@@ -176,6 +177,7 @@ namespace FinanceAccounting.Controllers
             try
             {
                 _unitOfWork.Operations.Update(foundOperation, transmittedOperation);
+                _unitOfWork.Save();
                 return Ok(transmittedOperation);
             }
             catch (Exception e)
@@ -197,6 +199,7 @@ namespace FinanceAccounting.Controllers
             try
             {
                 _unitOfWork.Operations.Delete(operation);
+                _unitOfWork.Save();
                 return Ok("Операция удалена");
             }
             catch (Exception e)

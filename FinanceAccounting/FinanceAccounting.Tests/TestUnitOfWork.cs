@@ -29,7 +29,12 @@ namespace FinanceAccounting.Tests
                 return _operationRepository;
             }
         }
-        
+
+        public void Save()
+        {
+            throw new System.NotImplementedException();
+        }
+
         public void Dispose()
         {
             throw new System.NotImplementedException();

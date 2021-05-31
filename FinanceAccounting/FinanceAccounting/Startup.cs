@@ -27,6 +27,7 @@ namespace FinanceAccounting
                 .UseSqlServer(
                     Configuration.GetConnectionString("sqlConnection")));
             services.AddTransient<IUnitOfWork, UnitOfWork>();
+            services.AddTransient<IFinanceContext, FinanceContext>();
             services.AddControllers().AddNewtonsoftJson(options =>
                 options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
             );

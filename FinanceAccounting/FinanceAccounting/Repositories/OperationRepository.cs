@@ -10,9 +10,9 @@ namespace FinanceAccounting.Repositories
 {
     public class OperationRepository : IOperationRepository
     {
-        private readonly FinanceContext _context;
+        private readonly IFinanceContext _context;
 
-        public OperationRepository(FinanceContext context)
+        public OperationRepository(IFinanceContext context)
         {
             _context = context;
         }
@@ -52,14 +52,12 @@ namespace FinanceAccounting.Repositories
         {
             account.Operations.Add(operation);
             
-            _context.SaveChanges();
             isAdded = true;
         }
 
         public void Delete(Operation operation)
         {
             _context.Operations.Remove(operation);
-            _context.SaveChanges();
         }
 
         public void Update(Operation foundOperation, Operation transmittedOperation)
@@ -68,7 +66,6 @@ namespace FinanceAccounting.Repositories
             foundOperation.Sum = transmittedOperation.Sum;
             foundOperation.Date = transmittedOperation.Date;
             foundOperation.Description = transmittedOperation.Description;
-            _context.SaveChanges();
         }
 
         public List<Operation> GetAccountOperations(Account account)

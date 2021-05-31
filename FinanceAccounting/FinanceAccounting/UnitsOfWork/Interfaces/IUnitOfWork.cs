@@ -8,5 +8,7 @@ namespace FinanceAccounting.UnitsOfWork.Interfaces
         IAccountRepository Accounts { get; }
         
         IOperationRepository Operations { get; }
+        
+        void Save();
     }
 }

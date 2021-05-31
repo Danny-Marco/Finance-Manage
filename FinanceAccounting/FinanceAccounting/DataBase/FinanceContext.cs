@@ -5,8 +5,10 @@ using Microsoft.Extensions.Configuration;
 
 namespace FinanceAccounting.DataBase
 {
-    public class FinanceContext : DbContext
+    public class FinanceContext : DbContext, IFinanceContext
     {
+        public DbContext Instance => this;
+        
         public DbSet<Account> Accounts { get; set; }
 
         public DbSet<Operation> Operations { get; set; }
@@ -18,6 +20,11 @@ namespace FinanceAccounting.DataBase
         public FinanceContext(DbContextOptions<FinanceContext> options)
             : base(options)
         {
+        }
+        
+        public void Save()
+        {
+            SaveChanges();
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

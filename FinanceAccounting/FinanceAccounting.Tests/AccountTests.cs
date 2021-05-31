@@ -21,7 +21,7 @@ namespace FinanceAccounting.Tests
         {
             var dataTest = new DataTest();
             _unitOfWork = new TestUnitOfWork();
-            _controller = new AccountsController(_unitOfWork);
+            // _controller = new AccountsController(_unitOfWork);
             _accounts = dataTest.CreateAccounts();
         }
 
