@@ -4,6 +4,7 @@ using System.Linq;
 using FinanceAccounting.Controllers;
 using FinanceAccounting.Models;
 using FinanceAccounting.Models.Request;
+using FinanceAccounting.Repositories.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using NUnit.Framework;
@@ -15,11 +16,14 @@ namespace FinanceAccounting.Tests.TestRepositories
         private TestUnitOfWork _unitOfWork;
         private OperationsController _controller;
         private Account _account;
+        private IOperationRepository _operations;
 
         [SetUp]
         public void Setup()
         {
-            _unitOfWork = new TestUnitOfWork();
+            var accounts = new TestAccountRepository();
+            _operations = new TestOperationRepository();
+            _unitOfWork = new TestUnitOfWork(accounts, _operations);
             _controller = new OperationsController(_unitOfWork);
             _account = _unitOfWork.Accounts.Get(1);
         }
@@ -137,7 +141,7 @@ namespace FinanceAccounting.Tests.TestRepositories
         {
             const int AccountId = 1;
             const string expectedResponse = "Операция(Income) Test Income 456 была добавлена";
-            var accountQuantity = _account.Operations.Count;
+            var operationsQuantity = _operations.GetAll().Count;
             var operation = new Operation
             {
                 DefinitionId = 1,
@@ -145,12 +149,14 @@ namespace FinanceAccounting.Tests.TestRepositories
                 Date = new DateTime(2021, 5, 12),
                 Description = "Test Income 456"
             };
+            var expectedAccountSum = _account.CurrentSum + operation.Sum;
 
             var response = _controller.AddOperation(operation, AccountId);
             var responseResult = (OkObjectResult) response;
             var responseResultValue = responseResult.Value;
 
-            Assert.That(_account.Operations.Count, Is.EqualTo(accountQuantity + 1));
+            Assert.AreEqual(_account.CurrentSum, expectedAccountSum);
+            Assert.That(_operations.GetAll().Count, Is.EqualTo(operationsQuantity + 1));
             Assert.That(response, Is.TypeOf<OkObjectResult>());
             Assert.That(responseResultValue, Is.EqualTo(expectedResponse));
         }
@@ -181,6 +187,7 @@ namespace FinanceAccounting.Tests.TestRepositories
         {
             const int AccountId = 1;
             const string expectedResponse = "Не удалось добавить операцию";
+            var expectedQuantityOperations = _account.Operations.Count;
             var operation = new Operation
             {
                 DefinitionId = 2,
@@ -193,6 +200,7 @@ namespace FinanceAccounting.Tests.TestRepositories
             var responseResult = (BadRequestObjectResult) response;
             var responseResultValue = responseResult.Value;
 
+            Assert.AreEqual(expectedQuantityOperations, _account.Operations.Count);
             Assert.That(response, Is.TypeOf<BadRequestObjectResult>());
             Assert.That(responseResultValue, Is.EqualTo(expectedResponse));
         }
@@ -348,22 +356,23 @@ namespace FinanceAccounting.Tests.TestRepositories
                 Date = new DateTime(2021, 5, 10),
                 Description = "Test update"
             };
-            
+            var foundOperations = _operations.Get(operation.OperationId);
+
             var response = _controller.UpdateOperation(operation);
             var responseResult = (OkObjectResult) response;
             var responseResultValue = responseResult.Value as Operation;
 
             Assert.That(response, Is.TypeOf<OkObjectResult>());
-            Assert.That(operation.OperationId, Is.EqualTo(responseResultValue.OperationId));
-            Assert.That(operation.DefinitionId, Is.EqualTo(responseResultValue.DefinitionId));
-            Assert.That(operation.Sum, Is.EqualTo(responseResultValue.Sum));
-            Assert.That(operation.Date, Is.EqualTo(responseResultValue.Date));
-            Assert.That(operation.Description, Is.EqualTo(responseResultValue.Description));
-            Assert.That(operation.AccountId, Is.EqualTo(responseResultValue.AccountId));
-            Assert.That(operation.Account, Is.EqualTo(responseResultValue.Account));
-            Assert.That(operation.PurposeOperation, Is.EqualTo(responseResultValue.PurposeOperation));
+            Assert.AreEqual(foundOperations.OperationId, responseResultValue.OperationId);
+            Assert.AreEqual(foundOperations.Sum, responseResultValue.Sum);
+            Assert.AreEqual(foundOperations.DefinitionId, responseResultValue.DefinitionId);
+            Assert.AreEqual(foundOperations.Date, responseResultValue.Date);
+            Assert.AreEqual(foundOperations.Description, responseResultValue.Description);
+            Assert.AreEqual(foundOperations.AccountId, responseResultValue.AccountId);
+            Assert.AreEqual(foundOperations.Account, responseResultValue.Account);
+            Assert.AreEqual(foundOperations.PurposeOperation, responseResultValue.PurposeOperation);
         }
-        
+
         [Test]
         public void UpdateOperation_Operation_NotFoundResult()
         {
@@ -376,7 +385,7 @@ namespace FinanceAccounting.Tests.TestRepositories
                 Date = new DateTime(2021, 5, 10),
                 Description = "Test update"
             };
-            
+
             var response = _controller.UpdateOperation(operation);
             var responseResult = (NotFoundObjectResult) response;
             var responseResultValue = responseResult.Value;
@@ -405,7 +414,7 @@ namespace FinanceAccounting.Tests.TestRepositories
             Assert.That(response, Is.TypeOf<OkObjectResult>());
             Assert.That(responseResultValue, Is.EqualTo(expectedResponse));
         }
-        
+
         [Test]
         public void DeleteOperation_OperationID_66_NotFoundResult()
         {

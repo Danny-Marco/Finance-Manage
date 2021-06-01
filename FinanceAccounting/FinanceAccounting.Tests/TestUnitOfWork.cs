@@ -1,43 +1,228 @@
+using System;
+using System.Collections.Generic;
+using Castle.Core.Internal;
+using FinanceAccounting.Models;
+using FinanceAccounting.Models.Interfaces;
+using FinanceAccounting.Observer;
+using FinanceAccounting.Observer.Interfaces;
 using FinanceAccounting.Repositories.Interfaces;
-using FinanceAccounting.Tests.TestRepositories;
 using FinanceAccounting.UnitsOfWork.Interfaces;
 
 namespace FinanceAccounting.Tests
 {
     public class TestUnitOfWork : IUnitOfWork
     {
-        private TestAccountRepository _accountRepository;
+        private readonly AccountHandle _accountHandler;
+        private readonly OperationHandle _operationHandler;
 
-        private TestOperationRepository _operationRepository;
+        public IAccountRepository Accounts { get; }
 
-        public IAccountRepository Accounts
+        public IOperationRepository Operations { get; }
+
+        public TestUnitOfWork(IAccountRepository accounts, IOperationRepository operations)
         {
-            get
+            Accounts = accounts;
+            Operations = operations;
+
+            _accountHandler = new AccountHandle(Accounts);
+            _operationHandler = new OperationHandle(Operations, Accounts);
+        }
+
+
+        #region Get
+
+        public Account GetAccountById(int id)
+        {
+            var account = _accountHandler.GetById(id);
+            if (account == null)
             {
-                if (_accountRepository != null) return _accountRepository;
-                _accountRepository = new TestAccountRepository();
-                return _accountRepository;
+                account = Accounts.Get(id);
+                _accountHandler.AddToStoredAccounts(account);
+            }
+
+            return account;
+        }
+
+        public List<Account> GetAllAccounts()
+        {
+            var accounts = Accounts.GetAll();
+            if (!accounts.IsNullOrEmpty())
+            {
+                _accountHandler.AddToStoredAccounts(accounts);
+            }
+
+            return accounts;
+        }
+
+        public Operation GetOperationByID(int id)
+        {
+            var operation = _operationHandler.GetById(id);
+            if (operation == null)
+            {
+                operation = Operations.Get(id);
+                _operationHandler.AddToStoredOperations(operation);
+            }
+
+            return operation;
+        }
+
+        public List<Operation> GetOperationsByDate(Account account, DateTime date, ref bool areThereOperations)
+        {
+            var operations = Operations.GetOperationsByDate(account, date);
+            if (!operations.IsNullOrEmpty())
+            {
+                areThereOperations = true;
+                _operationHandler.AddToStoredOperations(operations);
+            }
+
+            return operations;
+        }
+
+        public List<Operation> GetOperationsByType(List<Operation> operations, int definitionId)
+        {
+            var foundOperations = Operations.GetOperationsByType(operations, definitionId);
+            if (!foundOperations.IsNullOrEmpty())
+            {
+                _operationHandler.AddToStoredOperations(foundOperations);
+            }
+
+            return foundOperations;
+        }
+
+        public List<Operation> GetOperationsForPeriod(Account account, DateTime startDate, DateTime endDate,
+            ref bool areThereOperations)
+        {
+            var foundOperations =
+                Operations.GetOperationsForPeriod(account, startDate, endDate);
+
+            if (!foundOperations.IsNullOrEmpty())
+            {
+                areThereOperations = true;
+                _operationHandler.AddToStoredOperations(foundOperations);
+            }
+
+            return foundOperations;
+        }
+
+        #endregion
+
+        #region Register
+
+        public void RegisterDirty(IEntity entity)
+        {
+            switch (entity)
+            {
+                case Account account:
+                    _accountHandler.RegisterDirty(account);
+                    break;
+                case Operation operation:
+                    _operationHandler.RegisterDirty(operation);
+                    break;
             }
         }
 
-        public IOperationRepository Operations
+        public void RegisterDelete(IEntity entity)
         {
-            get
+            switch (entity)
             {
-                if (_operationRepository != null) return _operationRepository;
-                _operationRepository = new TestOperationRepository();
-                return _operationRepository;
+                case Account account:
+                    _accountHandler.RegisterDelete(account);
+                    break;
+                case Operation operation:
+                    _operationHandler.RegisterDelete(operation);
+                    break;
             }
         }
 
-        public void Save()
+        public void RegisterNew(IEntity entity, ref bool isAdded)
         {
-            throw new System.NotImplementedException();
+            switch (entity)
+            {
+                case Account account:
+                    _accountHandler.RegisterNew(account, ref isAdded);
+                    break;
+                case Operation operation:
+                    _operationHandler.RegisterNew(operation, ref isAdded);
+                    break;
+            }
         }
+
+        #endregion
 
         public void Dispose()
         {
             throw new System.NotImplementedException();
+        }
+
+        public void Commit()
+        {
+            Insert();
+            UpdateDirty();
+            DeleteRemoved();
+        }
+
+        public void Disposing(IEntity entity)
+        {
+            DisposeNew(entity);
+            DisposeDirty(entity);
+            DisposeRemoved(entity);
+        }
+
+        private void DeleteRemoved()
+        {
+            _accountHandler.DeleteRemoved();
+            _operationHandler.DeleteRemoved();
+        }
+
+        private void Insert()
+        {
+            _accountHandler.Insert();
+            _operationHandler.Insert();
+        }
+
+        private void UpdateDirty()
+        {
+            _accountHandler.UpdateDirty();
+            _operationHandler.UpdateDirty();
+        }
+
+        private void DisposeNew(IEntity entity)
+        {
+            switch (entity)
+            {
+                case Account account:
+                    _accountHandler.DisposeNew(account);
+                    break;
+                case Operation operation:
+                    _operationHandler.DisposeNew(operation);
+                    break;
+            }
+        }
+
+        private void DisposeDirty(IEntity entity)
+        {
+            switch (entity)
+            {
+                case Account account:
+                    _accountHandler.DisposeDirty(account);
+                    break;
+                case Operation operation:
+                    _operationHandler.DisposeDirty(operation);
+                    break;
+            }
+        }
+
+        private void DisposeRemoved(IEntity entity)
+        {
+            switch (entity)
+            {
+                case Account account:
+                    _accountHandler.DisposeRemoved(account);
+                    break;
+                case Operation operation:
+                    _operationHandler.DisposeRemoved(operation);
+                    break;
+            }
         }
     }
 }

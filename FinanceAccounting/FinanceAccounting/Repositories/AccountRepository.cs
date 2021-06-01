@@ -16,7 +16,16 @@ namespace FinanceAccounting.Repositories
             _context = context;
         }
 
-        public void Create(Account account)
+        public void Update(Account account)
+        {
+            var foundAccount = Get(account.AccountId);
+            if (account.CurrentSum >= 0)
+            {
+                foundAccount.CurrentSum = account.CurrentSum;
+            }
+        }
+
+        public void Add(Account account)
         {
             try
             {
@@ -31,7 +40,7 @@ namespace FinanceAccounting.Repositories
 
         public Account Get(int id)
         {
-            return _context.Accounts.FirstOrDefault(a => a.AccountId == id);
+            return _context.Accounts.Find(id);
         }
 
         public List<Account> GetAll()
@@ -43,6 +52,11 @@ namespace FinanceAccounting.Repositories
         public void Delete(Account account)
         {
             _context.Accounts.Remove(account);
+        }
+
+        public void Save()
+        {
+            _context.Save();
         }
 
         public int Count()

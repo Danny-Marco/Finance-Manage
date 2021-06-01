@@ -1,14 +1,13 @@
 using FinanceAccounting.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
 
 namespace FinanceAccounting.DataBase
 {
     public interface IFinanceContext : IDbContext
     {
-        DbSet<Account> Accounts { get; set; }
-        
-        DbSet<Operation> Operations { get; set; }
+        DbSet<Account> Accounts { get; }
+
+        DbSet<Operation> Operations { get; }
 
         void Save();
     }

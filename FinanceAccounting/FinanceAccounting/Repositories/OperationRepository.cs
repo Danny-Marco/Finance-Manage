@@ -17,14 +17,9 @@ namespace FinanceAccounting.Repositories
             _context = context;
         }
 
-        public Account GetAccount(int id)
-        {
-            return _context.Accounts.FirstOrDefault(a => a.AccountId == id);
-        }
-
         public Operation Get(int id)
         {
-            return _context.Operations.FirstOrDefault(operation => operation.OperationId == id);
+            return _context.Operations.Find(id);
         }
 
         public List<Operation> GetAll()
@@ -32,76 +27,58 @@ namespace FinanceAccounting.Repositories
             return _context.Operations.ToList();
         }
 
-        public void CreateOperation(Account account, Operation operation, ref bool isAdded)
-        {
-            switch (operation.PurposeOperation)
-            {
-                case OperationEnum.Income:
-                    AddToAccountOperations(account, operation, out isAdded);
-                    account.CurrentSum += operation.Sum;
-                    break;
-
-                case OperationEnum.Expense when (account.CurrentSum - operation.Sum) > 0:
-                    AddToAccountOperations(account, operation, out isAdded);
-                    account.CurrentSum -= operation.Sum;
-                    break;
-            }
-        }
-
-        private void AddToAccountOperations(Account account, Operation operation, out bool isAdded)
-        {
-            account.Operations.Add(operation);
-            
-            isAdded = true;
-        }
-
         public void Delete(Operation operation)
         {
             _context.Operations.Remove(operation);
         }
 
-        public void Update(Operation foundOperation, Operation transmittedOperation)
+        public void Update(Operation operation)
         {
-            foundOperation.DefinitionId = transmittedOperation.DefinitionId;
-            foundOperation.Sum = transmittedOperation.Sum;
-            foundOperation.Date = transmittedOperation.Date;
-            foundOperation.Description = transmittedOperation.Description;
-        }
-
-        public List<Operation> GetAccountOperations(Account account)
-        {
-            return account.Operations.ToList();
-        }
-
-        public List<Operation> GetOperationsByDate(Account account, DateTime date, ref bool areThereOperations)
-        {
-            var operations =
-                account.Operations.Where(o => o.Date.Day == date.Date.Day).ToList();
-
-            if (!operations.IsNullOrEmpty())
+            var findOperation = Get(operation.OperationId);
+            if (operation.Sum > 0)
             {
-                areThereOperations = true;
+                findOperation.Sum = operation.Sum;
             }
 
-            return operations;
-        }
-
-        public List<Operation> GetOperationsForPeriod(Account account, DateTime dateStart, DateTime dateEnd,
-            ref bool areThereOperations)
-        {
-            var operations =
-                account.Operations
-                    .Where(o => o.Date.Day >= dateStart.Date.Day && o.Date.Day <= dateEnd.Date.Day).ToList();
-
-            if (!operations.IsNullOrEmpty())
+            if (operation.DefinitionId == (int) OperationEnum.Income ||
+                operation.DefinitionId == (int) OperationEnum.Expense)
             {
-                areThereOperations = true;
+                findOperation.DefinitionId = operation.DefinitionId;
             }
 
-            return operations;
+            if (operation.Date != null && operation.Date != DateTime.MinValue)
+            {
+                findOperation.Date = operation.Date;
+            }
+
+            if (operation.Description != null)
+            {
+                findOperation.Description = operation.Description;
+            }
         }
 
-        public List<Operation> GetSortedOperationsByType(List<Operation> operations, int definitionId)
+        public void Add(Operation operation)
+        {
+            _context.Operations.Add(operation);
+        }
+
+        public void Save()
+        {
+            _context.Save();
+        }
+
+        public List<Operation> GetOperationsByDate(Account account, DateTime date)
+        {
+            return account.Operations.Where(o => o.Date.Day == date.Date.Day).ToList();;
+        }
+
+        public List<Operation> GetOperationsForPeriod(Account account, DateTime dateStart, DateTime dateEnd)
+        {
+            return account.Operations
+                .Where(o => o.Date.Day >= dateStart.Date.Day && o.Date.Day <= dateEnd.Date.Day).ToList();;
+        }
+
+        public List<Operation> GetOperationsByType(List<Operation> operations, int definitionId)
         {
             operations = operations.Where(o => o.DefinitionId == definitionId).ToList();
             return operations;

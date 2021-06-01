@@ -1,4 +1,6 @@
-using System;using FinanceAccounting.Models;
+using System;
+using Castle.Core.Internal;
+using FinanceAccounting.Models;
 using FinanceAccounting.UnitsOfWork.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,7 +10,7 @@ namespace FinanceAccounting.Controllers
     [ApiController]
     public class AccountsController : ControllerBase
     {
-        private IUnitOfWork _unitOfWork;
+        private readonly IUnitOfWork _unitOfWork;
 
         public AccountsController(IUnitOfWork unitOfWork)
         {
@@ -18,23 +20,20 @@ namespace FinanceAccounting.Controllers
         [HttpGet]
         public IActionResult GetAllAccounts()
         {
-            try
-            {
-                var accounts = _unitOfWork.Accounts.GetAll();
+            var accounts = _unitOfWork.GetAllAccounts();
 
+            if (!accounts.IsNullOrEmpty())
+            {
                 return Ok(accounts);
             }
-            catch
-            {
-                return NotFound("Аккаунтов нет");
-            }
-        }
 
+            return NotFound("Аккаунтов нет");
+        }
 
         [HttpGet("{id:int}")]
         public IActionResult GetAccount(int id)
         {
-            var account = _unitOfWork.Accounts.Get(id);
+            var account = _unitOfWork.GetAccountById(id);
 
             if (account != null)
             {
@@ -47,39 +46,66 @@ namespace FinanceAccounting.Controllers
         [HttpPost]
         public IActionResult CreateAccount([FromBody] Account account)
         {
+            var isAdded = false;
             if (account == null)
             {
                 return BadRequest("Нет аккаунта для добавления!");
             }
-            
+
             try
             {
-                _unitOfWork.Accounts.Create(account);
-                _unitOfWork.Save();
+                _unitOfWork.RegisterNew(account, ref isAdded);
+                _unitOfWork.Commit();
                 return Ok("Аккаунт был добавлен");
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
+                _unitOfWork.Disposing(account);
                 return BadRequest("Ну удалось добавить аккаунт!");
             }
         }
-        
+
+        [HttpPut]
+        public IActionResult UpdateAccount([FromBody] Account transmittedAccount)
+        {
+            var foundAccount = _unitOfWork.GetAccountById(transmittedAccount.AccountId);
+
+            if (foundAccount == null)
+            {
+                return NotFound("Аккаунт для изменения не найден");
+            }
+
+            try
+            {
+                _unitOfWork.RegisterDirty(transmittedAccount);
+                _unitOfWork.Commit();
+                return Ok(foundAccount);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                _unitOfWork.Disposing(transmittedAccount);
+                return BadRequest("Не получилось изменить аккаунт");
+            }
+        }
+
         [HttpDelete("{id}")]
         public IActionResult DeleteAccount(int id)
         {
-            var account = _unitOfWork.Accounts.Get(id);
+            var account = _unitOfWork.GetAccountById(id);
 
             if (account != null)
             {
                 try
                 {
-                    _unitOfWork.Accounts.Delete(account);
-                    _unitOfWork.Save();
+                    _unitOfWork.RegisterDelete(account);
+                    _unitOfWork.Commit();
                     return Ok("Аккаунт удалён");
                 }
                 catch
                 {
+                    _unitOfWork.Disposing(account);
                     return BadRequest("Не удалось удалить аккаунт!");
                 }
             }

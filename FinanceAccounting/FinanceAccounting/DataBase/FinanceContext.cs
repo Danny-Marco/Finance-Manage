@@ -8,7 +8,7 @@ namespace FinanceAccounting.DataBase
     public class FinanceContext : DbContext, IFinanceContext
     {
         public DbContext Instance => this;
-        
+
         public DbSet<Account> Accounts { get; set; }
 
         public DbSet<Operation> Operations { get; set; }
@@ -21,7 +21,7 @@ namespace FinanceAccounting.DataBase
             : base(options)
         {
         }
-        
+
         public void Save()
         {
             SaveChanges();
@@ -31,16 +31,19 @@ namespace FinanceAccounting.DataBase
         {
             if (!optionsBuilder.IsConfigured)
             {
-                optionsBuilder
-                    .UseLazyLoadingProxies();
-
                 IConfigurationRoot configuration = new ConfigurationBuilder()
                     .SetBasePath(Directory.GetCurrentDirectory())
                     .AddJsonFile("appsettings.json")
                     .Build();
-                var connectionString = configuration.GetConnectionString("sqlConnection");
-                optionsBuilder.UseSqlServer(connectionString);
             }
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Operation>()
+                .HasOne<Account>(o => o.Account)
+                .WithMany(a => a.Operations)
+                .HasForeignKey(o => o.AccountId);
         }
     }
 }

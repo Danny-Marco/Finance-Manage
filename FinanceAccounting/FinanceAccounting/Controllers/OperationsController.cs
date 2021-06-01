@@ -12,7 +12,7 @@ namespace FinanceAccounting.Controllers
     [ApiController]
     public class OperationsController : ControllerBase
     {
-        private IUnitOfWork _unitOfWork;
+        private readonly IUnitOfWork _unitOfWork;
 
         public OperationsController(IUnitOfWork unitOfWork)
         {
@@ -22,7 +22,7 @@ namespace FinanceAccounting.Controllers
         [HttpGet("{id:int}")]
         public ActionResult<List<Operation>> GetAccountOperations(int id)
         {
-            var account = _unitOfWork.Operations.GetAccount(id);
+            var account = _unitOfWork.GetAccountById(id);
 
             if (account == null)
             {
@@ -36,8 +36,7 @@ namespace FinanceAccounting.Controllers
 
             try
             {
-                var response = _unitOfWork.Operations.GetAccountOperations(account);
-
+                var response = account.Operations;
                 return Ok(response);
             }
             catch (Exception e)
@@ -50,7 +49,7 @@ namespace FinanceAccounting.Controllers
         [HttpGet("{id:int}")]
         public ActionResult<List<Operation>> GetOperationsByType(int id, int definitionId)
         {
-            var account = _unitOfWork.Operations.GetAccount(id);
+            var account = _unitOfWork.GetAccountById(id);
 
             if (account == null)
             {
@@ -65,7 +64,7 @@ namespace FinanceAccounting.Controllers
             try
             {
                 var response =
-                    _unitOfWork.Operations.GetSortedOperationsByType(account.Operations, definitionId);
+                    _unitOfWork.GetOperationsByType(account.Operations, definitionId);
 
                 if (!response.IsNullOrEmpty())
                 {
@@ -88,21 +87,23 @@ namespace FinanceAccounting.Controllers
         public IActionResult AddOperation([FromBody] Operation operation, int id)
         {
             var isAdded = false;
-            var account = _unitOfWork.Accounts.Get(id);
+            var account = _unitOfWork.GetAccountById(id);
 
             if (account == null)
             {
                 return NotFound("Аккаунт с таким id не найден!");
             }
 
-            _unitOfWork.Operations.CreateOperation(account, operation, ref isAdded);
+            operation.AccountId = id;
+            _unitOfWork.RegisterNew(operation, ref isAdded);
 
             if (isAdded)
             {
-                _unitOfWork.Save();
+                _unitOfWork.Commit();
                 return Ok($"Операция({operation.PurposeOperation}) {operation.Description} была добавлена");
             }
 
+            _unitOfWork.Disposing(operation);
             return BadRequest("Не удалось добавить операцию");
         }
 
@@ -117,7 +118,7 @@ namespace FinanceAccounting.Controllers
                 return BadRequest("Не верный формат даты!");
             }
 
-            var account = _unitOfWork.Accounts.Get(id);
+            var account = _unitOfWork.GetAccountById(id);
 
             if (account == null)
             {
@@ -125,7 +126,7 @@ namespace FinanceAccounting.Controllers
             }
 
             var operations =
-                _unitOfWork.Operations.GetOperationsByDate(account, date, ref areThereOperations);
+                _unitOfWork.GetOperationsByDate(account, date, ref areThereOperations);
 
             if (areThereOperations)
             {
@@ -140,13 +141,13 @@ namespace FinanceAccounting.Controllers
         {
             var areThereOperations = false;
 
-            var account = _unitOfWork.Accounts.Get(id);
+            var account = _unitOfWork.GetAccountById(id);
 
             if (account == null)
             {
                 return NotFound("Аккаунт с таким id не найден!");
             }
-            
+
             if (!DateTime.TryParse(dateRange.StartDate, out var startDate)
                 & !DateTime.TryParse(dateRange.EndDate, out var endDate))
             {
@@ -154,7 +155,7 @@ namespace FinanceAccounting.Controllers
             }
 
             var operations =
-                _unitOfWork.Operations.GetOperationsForPeriod(account, startDate, endDate, ref areThereOperations);
+                _unitOfWork.GetOperationsForPeriod(account, startDate, endDate, ref areThereOperations);
 
             if (areThereOperations)
             {
@@ -167,8 +168,8 @@ namespace FinanceAccounting.Controllers
         [HttpPut]
         public IActionResult UpdateOperation([FromBody] Operation transmittedOperation)
         {
-            var foundOperation = _unitOfWork.Operations.Get(transmittedOperation.OperationId);
-            
+            var foundOperation = _unitOfWork.GetOperationByID(transmittedOperation.OperationId);
+
             if (foundOperation == null)
             {
                 return NotFound("Операция для изменения не найдена");
@@ -176,13 +177,14 @@ namespace FinanceAccounting.Controllers
 
             try
             {
-                _unitOfWork.Operations.Update(foundOperation, transmittedOperation);
-                _unitOfWork.Save();
-                return Ok(transmittedOperation);
+                _unitOfWork.RegisterDirty(transmittedOperation);
+                _unitOfWork.Commit();
+                return Ok(foundOperation);
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
+                _unitOfWork.Disposing(transmittedOperation);
                 return BadRequest("Не получилось изменить операцию");
             }
         }
@@ -190,7 +192,7 @@ namespace FinanceAccounting.Controllers
         [HttpDelete("{id:int}")]
         public IActionResult DeleteOperation(int id)
         {
-            var operation = _unitOfWork.Operations.Get(id);
+            var operation = _unitOfWork.GetOperationByID(id);
             if (operation == null)
             {
                 return NotFound("Операция с таким ID не найдена");
@@ -198,13 +200,14 @@ namespace FinanceAccounting.Controllers
 
             try
             {
-                _unitOfWork.Operations.Delete(operation);
-                _unitOfWork.Save();
+                _unitOfWork.RegisterDelete(operation);
+                _unitOfWork.Commit();
                 return Ok("Операция удалена");
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
+                _unitOfWork.Disposing(operation);
                 return BadRequest("Не получилось удалить операцию");
             }
         }

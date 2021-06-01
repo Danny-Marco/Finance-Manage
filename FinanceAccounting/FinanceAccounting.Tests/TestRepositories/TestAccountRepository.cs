@@ -7,9 +7,9 @@ namespace FinanceAccounting.Tests.TestRepositories
 {
     public class TestAccountRepository : IAccountRepository
     {
-        private static DataTest dataTest = new DataTest();
-        public List<Account> Accounts = dataTest.CreateAccounts();
-        
+        private static readonly DataTest dataTest = new DataTest();
+        private readonly List<Account> Accounts = dataTest.CreateAccounts();
+
         public Account Get(int id)
         {
             return Accounts.FirstOrDefault(a => a.AccountId == id);
@@ -17,8 +17,7 @@ namespace FinanceAccounting.Tests.TestRepositories
 
         public List<Account> GetAll()
         {
-            var accounts = Accounts;
-            return accounts;
+            return Accounts;
         }
 
         public void Delete(Account account)
@@ -26,9 +25,19 @@ namespace FinanceAccounting.Tests.TestRepositories
             Accounts.Remove(account);
         }
 
-        public void Create(Account account)
+        public void Update(Account account)
+        {
+            var findAccount = Get(account.AccountId);
+            findAccount.CurrentSum = account.CurrentSum;
+        }
+
+        public void Add(Account account)
         {
             Accounts.Add(account);
+        }
+
+        public void Save()
+        {
         }
 
         public int Count()
