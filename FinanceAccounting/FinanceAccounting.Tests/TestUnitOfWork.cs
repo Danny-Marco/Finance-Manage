@@ -37,7 +37,7 @@ namespace FinanceAccounting.Tests
             if (account == null)
             {
                 account = Accounts.Get(id);
-                _accountHandler.AddToStoredAccounts(account);
+                _accountHandler.AddToStored(account);
             }
 
             return account;
@@ -48,7 +48,7 @@ namespace FinanceAccounting.Tests
             var accounts = Accounts.GetAll();
             if (!accounts.IsNullOrEmpty())
             {
-                _accountHandler.AddToStoredAccounts(accounts);
+                _accountHandler.AddToStored(accounts);
             }
 
             return accounts;
@@ -60,7 +60,7 @@ namespace FinanceAccounting.Tests
             if (operation == null)
             {
                 operation = Operations.Get(id);
-                _operationHandler.AddToStoredOperations(operation);
+                _operationHandler.AddToStored(operation);
             }
 
             return operation;
@@ -72,7 +72,7 @@ namespace FinanceAccounting.Tests
             if (!operations.IsNullOrEmpty())
             {
                 areThereOperations = true;
-                _operationHandler.AddToStoredOperations(operations);
+                _operationHandler.AddToStored(operations);
             }
 
             return operations;
@@ -83,7 +83,7 @@ namespace FinanceAccounting.Tests
             var foundOperations = Operations.GetOperationsByType(operations, definitionId);
             if (!foundOperations.IsNullOrEmpty())
             {
-                _operationHandler.AddToStoredOperations(foundOperations);
+                _operationHandler.AddToStored(foundOperations);
             }
 
             return foundOperations;
@@ -98,7 +98,7 @@ namespace FinanceAccounting.Tests
             if (!foundOperations.IsNullOrEmpty())
             {
                 areThereOperations = true;
-                _operationHandler.AddToStoredOperations(foundOperations);
+                _operationHandler.AddToStored(foundOperations);
             }
 
             return foundOperations;

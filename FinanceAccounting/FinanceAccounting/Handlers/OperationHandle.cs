@@ -7,7 +7,7 @@ using FinanceAccounting.Repositories.Interfaces;
 
 namespace FinanceAccounting.Observer.Interfaces
 {
-    public class OperationHandle : IHandleEntities
+    public class OperationHandle : IHandleEntities<Operation>
     {
         private readonly IOperationRepository _operations;
         private readonly IAccountRepository _accounts;
@@ -22,18 +22,6 @@ namespace FinanceAccounting.Observer.Interfaces
             _operations = operations;
             _accounts = accounts;
         }
-
-        #region handle_clear
-
-        public void AddToStoredOperations(List<Operation> operations)
-        {
-            foreach (var operation in operations)
-            {
-                AddToStoredOperations(operation);
-            }
-        }
-
-        #endregion
 
         #region handle_delete
 
@@ -119,7 +107,7 @@ namespace FinanceAccounting.Observer.Interfaces
                 foreach (var operation in _newOperations)
                 {
                     _operations.Add(operation);
-                    AddToStoredOperations(operation);
+                    AddToStored(operation);
                 }
 
                 _newOperations.Clear();
@@ -158,7 +146,7 @@ namespace FinanceAccounting.Observer.Interfaces
 
         #endregion
 
-        public void AddToStoredOperations(Operation operation)
+        public void AddToStored(Operation operation)
         {
             var isContainsDirty = _dirtyOperations.Contains(operation);
             var isContainsRemoved = _removeOperations.Contains(operation);
@@ -167,6 +155,14 @@ namespace FinanceAccounting.Observer.Interfaces
             if (!IsNull(operation) && !isContainsRemoved && !isContainsDirty && !isContainsClear)
             {
                 _storedOperations.Add(operation);
+            }
+        }
+
+        public void AddToStored(List<Operation> operations)
+        {
+            foreach (var operation in operations)
+            {
+                AddToStored(operation);
             }
         }
 

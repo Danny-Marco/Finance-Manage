@@ -13,8 +13,8 @@ namespace FinanceAccounting.UnitsOfWork
 {
     public class UnitOfWork : IUnitOfWork
     {
-        private readonly AccountHandle _accountHandler;
-        private readonly OperationHandle _operationHandler;
+        private readonly IHandleEntities<Account> _accountHandler;
+        private readonly IHandleEntities<Operation> _operationHandler;
         private readonly IFinanceContext _db;
         private bool disposed;
 
@@ -42,7 +42,7 @@ namespace FinanceAccounting.UnitsOfWork
             if (account == null)
             {
                 account = Accounts.Get(id);
-                _accountHandler.AddToStoredAccounts(account);
+                _accountHandler.AddToStored(account);
             }
 
             return account;
@@ -53,7 +53,7 @@ namespace FinanceAccounting.UnitsOfWork
             var accounts = Accounts.GetAll();
             if (!accounts.IsNullOrEmpty())
             {
-                _accountHandler.AddToStoredAccounts(accounts);
+                _accountHandler.AddToStored(accounts);
             }
 
             return accounts;
@@ -65,7 +65,7 @@ namespace FinanceAccounting.UnitsOfWork
             if (operation == null)
             {
                 operation = Operations.Get(id);
-                _operationHandler.AddToStoredOperations(operation);
+                _operationHandler.AddToStored(operation);
             }
 
             return operation;
@@ -77,7 +77,7 @@ namespace FinanceAccounting.UnitsOfWork
             if (!operations.IsNullOrEmpty())
             {
                 areThereOperations = true;
-                _operationHandler.AddToStoredOperations(operations);
+                _operationHandler.AddToStored(operations);
             }
 
             return operations;
@@ -88,7 +88,7 @@ namespace FinanceAccounting.UnitsOfWork
             var foundOperations = Operations.GetOperationsByType(operations, definitionId);
             if (!foundOperations.IsNullOrEmpty())
             {
-                _operationHandler.AddToStoredOperations(foundOperations);
+                _operationHandler.AddToStored(foundOperations);
             }
 
             return foundOperations;
@@ -103,7 +103,7 @@ namespace FinanceAccounting.UnitsOfWork
             if (!foundOperations.IsNullOrEmpty())
             {
                 areThereOperations = true;
-                _operationHandler.AddToStoredOperations(foundOperations);
+                _operationHandler.AddToStored(foundOperations);
             }
 
             return foundOperations;
@@ -232,7 +232,7 @@ namespace FinanceAccounting.UnitsOfWork
                 case Operation operation:
                     _operationHandler.DisposeDirty(operation);
                     break;
-            } 
+            }
         }
 
         private void DisposeRemoved(IEntity entity)

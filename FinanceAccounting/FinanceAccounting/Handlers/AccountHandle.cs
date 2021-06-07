@@ -7,7 +7,7 @@ using FinanceAccounting.Repositories.Interfaces;
 
 namespace FinanceAccounting.Observer
 {
-    public class AccountHandle : IHandleEntities
+    public class AccountHandle : IHandleEntities<Account>
     {
         private readonly List<Account> _newAccounts = new List<Account>();
         private readonly List<Account> _dirtyAccounts = new List<Account>();
@@ -34,7 +34,7 @@ namespace FinanceAccounting.Observer
             }
         }
 
-        public void AddToStoredAccounts(Account account)
+        public void AddToStored(Account account)
         {
             var isContainsStored = _storedAccounts.Contains(account);
             var isContainsDirty = _dirtyAccounts.Contains(account);
@@ -46,11 +46,11 @@ namespace FinanceAccounting.Observer
             }
         }
 
-        public void AddToStoredAccounts(List<Account> accounts)
+        public void AddToStored(List<Account> accounts)
         {
             foreach (var account in accounts)
             {
-                AddToStoredAccounts(account);
+                AddToStored(account);
             }
         }
 
@@ -61,7 +61,7 @@ namespace FinanceAccounting.Observer
                 foreach (var account in _newAccounts)
                 {
                     _accounts.Add(account);
-                    AddToStoredAccounts(account);
+                    AddToStored(account);
                 }
 
                 _newAccounts.Clear();
